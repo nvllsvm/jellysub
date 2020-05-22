@@ -1,4 +1,5 @@
 import collections
+import json
 import logging
 import re
 import uuid
@@ -21,18 +22,29 @@ async def auth_middleware(request, handler):
 
 async def ping(request):
     data = {
-        'status': 'ok',
-        'version': '1.9.0',
-        'type': 'jellysub',
+        'subsonic-response': {
+            'status': 'ok',
+            'version': '1.9.0',
+            'type': 'jellysub',
+        }
     }
 
-    top = Element('subsonic-response')
-    for key, value in data.items():
-        top.set(key, value)
+    if request.query.get('f') == 'json':
+        content_type = 'application/json'
+        body = json.dumps(data)
+    else:
+        content_type = 'application/xml'
+
+        key = 'subsonic-response'
+        top = Element(key)
+        for key, value in data[key].items():
+            top.set(key, value)
+
+        body = tostring(top)
 
     return aiohttp.web.Response(
-        body=tostring(top),
-        headers={'Content-Type': 'application/xml'},
+        body=body,
+        headers={'Content-Type': content_type},
         status=200)
 
 
