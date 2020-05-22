@@ -23,7 +23,7 @@ class PingView(View):
         data = {
             'status': 'ok',
             'version': '1.9.0',
-            'type': 'gonic',
+            'type': 'jellysub',
         }
 
         top = Element('subsonic-response')
@@ -93,7 +93,7 @@ class ArtistView(View):
             album.set('id', item['Id'])
             album.set('coverArt', item['ImageTags']['Primary'])
             album.set('artistId', artist_id)
-            album.set('artist', 'BUMBLEFUCK')
+            album.set('artist', ' & '.join(item['Artists'])),
             album.set('name', item['Name'])
             album.set('year', str(item['ProductionYear']))
             artist.append(album)
@@ -126,7 +126,15 @@ class AlbumView(View):
             song.set('artist', ' & '.join(item['Artists']))
             song.set('album', item['Album'])
             song.set('name', item['Name'])
+
+            song.set('duration', str(int(item['RunTimeTicks'] / 10000000)))
             song.set('track', str(item['IndexNumber']))
+
+            # TODO: determine actual suffix
+            # this is necessary for songs to be detected in Audinaut's
+            # broken-ass offline mode
+            song.set('suffix', 'mp3')
+
             album.append(song)
             song_count += 1
 
