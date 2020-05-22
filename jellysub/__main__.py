@@ -10,174 +10,139 @@ import configargparse
 import yarl
 
 
-class View(aiohttp.web.View):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.jellyfin = self.request.app['jellyfin']
-
-
-class PingView(View):
-
-    async def get(self):
-        data = {
-            'status': 'ok',
-            'version': '1.9.0',
-            'type': 'jellysub',
-        }
-
-        top = Element('subsonic-response')
-        for key, value in data.items():
-            top.set(key, value)
-
-        return aiohttp.web.Response(
-            body=tostring(top),
-            headers={'Content-Type': 'application/xml'},
-            status=200)
+@aiohttp.web.middleware
+async def auth_middleware(request, handler):
+    query = request.url.query
+    username = query['u']
+    password = query['p']
+    request.user = await request.app['jellyfin'].get_user(username, password)
+    return await handler(request)
 
 
-class ArtistsView(View):
+async def ping(request):
+    data = {
+        'status': 'ok',
+        'version': '1.9.0',
+        'type': 'jellysub',
+    }
 
-    async def get(self):
-        query = self.request.url.query
-        username = query['u']
-        password = query['p']
+    top = Element('subsonic-response')
+    for key, value in data.items():
+        top.set(key, value)
 
-        user = await self.jellyfin.get_user(username, password)
-        data = await self.jellyfin.get_album_artists(user)
-
-        results = collections.defaultdict(list)
-        for item in data['Items']:
-            first = item['Name'].lower()
-            group = first if first in string.ascii_lowercase else '#'
-
-            results[group].append(item)
-
-        top = Element('subsonic-response')
-        artists = SubElement(top, 'artists')
-        artists.set('ignoredArticles', '')
-
-        for prefix, values in results.items():
-            index = SubElement(artists, 'index')
-            index.set('name', prefix)
-
-            for artist in values:
-                ele = Element('artist')
-                ele.set('id', artist['Id'])
-                ele.set('name', artist['Name'])
-                ele.set('albumCount', str(1))
-                index.append(ele)
-
-        return aiohttp.web.Response(
-            body=tostring(top),
-            headers={'Content-Type': 'application/xml'},
-            status=200)
+    return aiohttp.web.Response(
+        body=tostring(top),
+        headers={'Content-Type': 'application/xml'},
+        status=200)
 
 
-class ArtistView(View):
+async def artists(request):
+    data = await request.app['jellyfin'].get_album_artists(request.user)
 
-    async def get(self):
-        query = self.request.url.query
-        username = query['u']
-        password = query['p']
-        artist_id = query['id']
+    results = collections.defaultdict(list)
+    for item in data['Items']:
+        first = item['Name'].lower()
+        group = first if first in string.ascii_lowercase else '#'
 
-        user = await self.jellyfin.get_user(username, password)
-        data = await self.jellyfin.get_albums(user, artist_id)
+        results[group].append(item)
 
-        top = Element('subsonic-response')
-        artist = SubElement(top, 'artist')
-        album_count = 0
-        for item in data['Items']:
-            album = Element('album')
-            album.set('id', item['Id'])
-            album.set('coverArt', item['Id'])
-            album.set('artistId', artist_id)
-            album.set('artist', ' & '.join(item['Artists'])),
-            album.set('name', item['Name'])
-            album.set('year', str(item['ProductionYear']))
-            artist.append(album)
-            album_count += 1
+    top = Element('subsonic-response')
+    artists = SubElement(top, 'artists')
+    artists.set('ignoredArticles', '')
 
-        artist.set('albumCount', str(album_count))
+    for prefix, values in results.items():
+        index = SubElement(artists, 'index')
+        index.set('name', prefix)
 
-        return aiohttp.web.Response(
-            body=tostring(top),
-            headers={'Content-Type': 'application/xml'},
-            status=200)
+        for artist in values:
+            ele = Element('artist')
+            ele.set('id', artist['Id'])
+            ele.set('name', artist['Name'])
+            ele.set('albumCount', str(1))
+            index.append(ele)
+
+    return aiohttp.web.Response(
+        body=tostring(top),
+        headers={'Content-Type': 'application/xml'},
+        status=200)
 
 
-class AlbumView(View):
-    async def get(self):
-        query = self.request.url.query
-        username = query['u']
-        password = query['p']
-        album_id = query['id']
+async def artist(request):
+    artist_id = request.url.query['id']
+    data = await request.app['jellyfin'].get_albums(request.user, artist_id)
 
-        user = await self.jellyfin.get_user(username, password)
-        data = await self.jellyfin.get_album(user, album_id)
+    top = Element('subsonic-response')
+    artist = SubElement(top, 'artist')
+    album_count = 0
+    for item in data['Items']:
+        album = Element('album')
+        album.set('id', item['Id'])
+        album.set('coverArt', item['Id'])
+        album.set('artistId', artist_id)
+        album.set('artist', ' & '.join(item['Artists'])),
+        album.set('name', item['Name'])
+        album.set('year', str(item['ProductionYear']))
+        artist.append(album)
+        album_count += 1
 
-        top = Element('subsonic-response')
-        album = SubElement(top, 'album')
-        song_count = 0
-        for item in data['Items']:
-            song = Element('song')
-            song.set('id', item['Id'])
-            song.set('artist', ' & '.join(item['Artists']))
-            song.set('album', item['Album'])
-            song.set('name', item['Name'])
-            song.set('coverArt', item['Album'])
+    artist.set('albumCount', str(album_count))
 
-            song.set('duration', str(int(item['RunTimeTicks'] / 10000000)))
-            song.set('track', str(item['IndexNumber']))
-
-            # TODO: determine actual suffix
-            # this is necessary for songs to be detected in Audinaut's
-            # broken-ass offline mode
-            song.set('suffix', 'mp3')
-
-            album.append(song)
-            song_count += 1
-
-        album.set('songCount', str(song_count))
-
-        return aiohttp.web.Response(
-            body=tostring(top),
-            headers={'Content-Type': 'application/xml'},
-            status=200)
+    return aiohttp.web.Response(
+        body=tostring(top),
+        headers={'Content-Type': 'application/xml'},
+        status=200)
 
 
-class CoverArtView(View):
+async def album(request):
+    album_id = request.url.query['id']
+    data = await request.app['jellyfin'].get_album(request.user, album_id)
 
-    async def get(self):
-        query = self.request.url.query
+    top = Element('subsonic-response')
+    album = SubElement(top, 'album')
+    song_count = 0
+    for item in data['Items']:
+        song = Element('song')
+        song.set('id', item['Id'])
+        song.set('artist', ' & '.join(item['Artists']))
+        song.set('album', item['Album'])
+        song.set('name', item['Name'])
+        song.set('coverArt', item['Album'])
 
-        username = query['u']
-        password = query['p']
-        album_id = query['id']
+        song.set('duration', str(int(item['RunTimeTicks'] / 10000000)))
+        song.set('track', str(item['IndexNumber']))
 
-        await self.jellyfin.get_user(username, password)
-        data = await self.jellyfin.get_album_cover(album_id)
+        # TODO: determine actual suffix
+        # this is necessary for songs to be detected in Audinaut's
+        # broken-ass offline mode
+        song.set('suffix', 'mp3')
 
-        return aiohttp.web.Response(
-            body=data,
-            status=200)
+        album.append(song)
+        song_count += 1
+
+    album.set('songCount', str(song_count))
+
+    return aiohttp.web.Response(
+        body=tostring(top),
+        headers={'Content-Type': 'application/xml'},
+        status=200)
 
 
-class StreamView(View):
-    async def get(self):
-        query = self.request.url.query
+async def cover_art(request):
+    album_id = request.url.query['id']
+    data = await request.app['jellyfin'].get_album_cover(album_id)
 
-        username = query['u']
-        password = query['p']
-        song_id = query['id']
+    return aiohttp.web.Response(
+        body=data,
+        status=200)
 
-        user = await self.jellyfin.get_user(username, password)
-        data = await self.jellyfin.download_song(user, song_id)
 
-        return aiohttp.web.Response(
-            body=data,
-            status=200)
+async def stream(request):
+    song_id = request.url.query['id']
+    data = await request.app['jellyfin'].download_song(request.user, song_id)
+
+    return aiohttp.web.Response(
+        body=data,
+        status=200)
 
 
 class JellyfinClient:
@@ -346,17 +311,18 @@ async def get_app(upstream):
     async def close_session(app):
         await app['jellyfin'].close()
 
-    app = aiohttp.web.Application()
+    app = aiohttp.web.Application(
+        middlewares=[auth_middleware])
     app['jellyfin'] = JellyfinClient(upstream)
     app.on_cleanup.append(close_session)
 
     app.add_routes([
-        aiohttp.web.route('*', '/rest/ping.view', PingView),
-        aiohttp.web.route('*', '/rest/getArtists.view', ArtistsView),
-        aiohttp.web.route('*', '/rest/getArtist.view', ArtistView),
-        aiohttp.web.route('*', '/rest/getAlbum.view', AlbumView),
-        aiohttp.web.route('*', '/rest/stream.view', StreamView),
-        aiohttp.web.route('*', '/rest/getCoverArt.view', CoverArtView),
+        aiohttp.web.route('*', '/rest/ping.view', ping),
+        aiohttp.web.route('*', '/rest/getArtists.view', artists),
+        aiohttp.web.route('*', '/rest/getArtist.view', artist),
+        aiohttp.web.route('*', '/rest/getAlbum.view', album),
+        aiohttp.web.route('*', '/rest/stream.view', stream),
+        aiohttp.web.route('*', '/rest/getCoverArt.view', cover_art),
     ])
     return app
 
