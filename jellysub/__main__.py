@@ -91,7 +91,7 @@ class ArtistView(View):
         for item in data['Items']:
             album = Element('album')
             album.set('id', item['Id'])
-            album.set('coverArt', item['ImageTags']['Primary'])
+            album.set('coverArt', item['Id'])
             album.set('artistId', artist_id)
             album.set('artist', ' & '.join(item['Artists'])),
             album.set('name', item['Name'])
@@ -126,6 +126,7 @@ class AlbumView(View):
             song.set('artist', ' & '.join(item['Artists']))
             song.set('album', item['Album'])
             song.set('name', item['Name'])
+            song.set('coverArt', item['Album'])
 
             song.set('duration', str(int(item['RunTimeTicks'] / 10000000)))
             song.set('track', str(item['IndexNumber']))
@@ -143,6 +144,23 @@ class AlbumView(View):
         return aiohttp.web.Response(
             body=tostring(top),
             headers={'Content-Type': 'application/xml'},
+            status=200)
+
+
+class CoverArtView(View):
+
+    async def get(self):
+        query = self.request.url.query
+
+        username = query['u']
+        password = query['p']
+        album_id = query['id']
+
+        await self.jellyfin.get_user(username, password)
+        data = await self.jellyfin.get_album_cover(album_id)
+
+        return aiohttp.web.Response(
+            body=data,
             status=200)
 
 
@@ -248,6 +266,17 @@ class JellyfinClient:
         async with self._client.get(url, **kwargs) as resp:
             return await resp.read()
 
+    async def get_album_cover(self, album_id):
+        url = self._url / 'Items' / album_id / 'Images/Primary/0'
+
+        kwargs = {
+            'params': {
+                'quality': '90'
+            }
+        }
+        async with self._client.get(url, **kwargs) as resp:
+            return await resp.read()
+
 #    StartIndex=0&Limit=10000&ParentId=7e64e319657a9516ec78490da03edccb&userId=f698fa3272bd4c0d93111207f45a9cb1
     async def _authenticate(self, username, password):
         kwargs = {
@@ -327,6 +356,7 @@ async def get_app(upstream):
         aiohttp.web.route('*', '/rest/getArtist.view', ArtistView),
         aiohttp.web.route('*', '/rest/getAlbum.view', AlbumView),
         aiohttp.web.route('*', '/rest/stream.view', StreamView),
+        aiohttp.web.route('*', '/rest/getCoverArt.view', CoverArtView),
     ])
     return app
 
