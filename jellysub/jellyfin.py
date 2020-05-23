@@ -77,6 +77,7 @@ class JellyfinClient:
             },
             'params': {
                 'ParentId': album_id,
+                'Fields': 'MediaSources',
             }
         }
         async with self._client.get(url, **kwargs) as resp:
