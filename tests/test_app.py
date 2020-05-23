@@ -10,7 +10,8 @@ class MockJellyfinServer(aiohttp.web.Application):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_routes([
-            aiohttp.web.route('POST', '/Users/authenticatebyname', self.authenticate),
+            aiohttp.web.route(
+                'POST', '/Users/authenticatebyname', self.authenticate),
         ])
 
     @staticmethod

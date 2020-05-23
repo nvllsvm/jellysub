@@ -264,12 +264,12 @@ class JellyfinClient:
         async with self._client.get(url, **kwargs) as resp:
             return await resp.read()
 
-#    StartIndex=0&Limit=10000&ParentId=7e64e319657a9516ec78490da03edccb&userId=f698fa3272bd4c0d93111207f45a9cb1
     async def _authenticate(self, username, password):
         kwargs = {
             'allow_redirects': False,
             'headers': {
-                'X-Emby-Authorization': self._build_authorization_header(self._auth_header),
+                'X-Emby-Authorization': self._build_authorization_header(
+                    self._auth_header),
             },
             'json': {
                 'Username': username,
@@ -303,13 +303,16 @@ class JellyfinClient:
                 raise ValueError(header)
             result[key] = value
 
-        if not all([v for k, v in result.items() if k not in ('Client', 'Token')]):
+        if not all([v
+                    for k, v in result.items()
+                    if k not in ('Client', 'Token')]):
             raise ValueError(header)
         return result
 
     @staticmethod
     def _build_authorization_header(data):
-        return 'MediaBrowser {}'.format(', '.join(f'{key}="{value}"' for key, value in data.items()))
+        return 'MediaBrowser {}'.format(
+            ', '.join(f'{key}="{value}"' for key, value in data.items()))
 
 
 def main():
