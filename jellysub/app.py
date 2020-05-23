@@ -90,9 +90,11 @@ async def artists(request):
     indexes = []
     for prefix, artists in results.items():
         artists = [
-            {'id': artist['Id'],
-             'name': artist['Name'],
-             'albumCount': 1}
+            {
+                'albumCount': 1,  # TODO: determine real album count
+                'id': artist['Id'],
+                'name': artist['Name'],
+            }
             for artist in artists
         ]
         artists = sorted(
