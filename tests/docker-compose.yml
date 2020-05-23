@@ -1,7 +1,0 @@
-version: "2.4"
-
-services:
-  mockserver:
-    image: mockserver/mockserver
-    ports:
-      - 1080
