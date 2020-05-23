@@ -14,8 +14,11 @@ import yarl
 @aiohttp.web.middleware
 async def auth_middleware(request, handler):
     query = request.url.query
-    username = query['u']
-    password = query['p']
+    try:
+        username = query['u']
+        password = query['p']
+    except KeyError:
+        return aiohttp.web.Response(status=400)
     request.user = await request.app['jellyfin'].get_user(username, password)
     return await handler(request)
 
