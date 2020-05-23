@@ -2,7 +2,7 @@ import unittest
 
 import aiohttp.test_utils
 import aiohttp.web
-import jellysub.__main__
+import jellysub.app
 import yarl
 
 
@@ -32,7 +32,7 @@ class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
             MockJellyfinServer())
         await self.mock_jellyfin.start_server()
 
-        self.app = await jellysub.__main__.get_app(
+        self.app = jellysub.app.Application(
             str(yarl.URL.build(
                 scheme='http',
                 host=self.mock_jellyfin.host,
