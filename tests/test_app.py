@@ -20,7 +20,7 @@ class MockJellyfinServer(aiohttp.web.Application):
             return aiohttp.web.Response(status=401)
         if body['Pw'] != request.app['password']:
             return aiohttp.web.Response(status=401)
-        return aiohttp.web.json_response({})
+        return aiohttp.web.json_response({'AccessToken': 'ZZZ'})
 
 
 class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
@@ -58,9 +58,20 @@ class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
         self.mock_jellyfin.app['username'] = 'abc'
         self.mock_jellyfin.app['password'] = 'xyz'
 
-        params = {
+        correct_auth = {
             'u': 'abc',
             'p': 'xyz'
         }
-        resp = await self.client.request('GET', '/rest/ping.view', params=params)
+
+        # valid
+        resp = await self.client.request(
+            'GET', '/rest/ping.view', params=correct_auth)
         self.assertEqual(resp.status, 200)
+
+        # invalid
+        for key in correct_auth:
+            params = correct_auth.copy()
+            params[key] = 'X'
+            resp = await self.client.request(
+                'GET', '/rest/ping.view', params=params)
+            self.assertEqual(resp.status, 401)

@@ -19,7 +19,12 @@ async def auth_middleware(request, handler):
         password = query['p']
     except KeyError:
         return aiohttp.web.Response(status=400)
-    request.user = await request.app['jellyfin'].get_user(username, password)
+
+    try:
+        request.user = await request.app['jellyfin'].get_user(
+            username, password)
+    except KeyError:
+        return aiohttp.web.Response(status=401)
     return await handler(request)
 
 
@@ -181,10 +186,12 @@ class JellyfinClient:
         await self._client.close()
 
     async def get_user(self, username, password):
-        if username not in self._users:
-            self._users[username] = await self._authenticate(
-                username, password)
-        return self._users[username]
+        key = (username, password)
+        if key not in self._users:
+            user = await self._authenticate(username, password)
+            if user:
+                self._users[key] = user
+        return self._users[key]
 
     async def get_album_artists(self, user):
         url = self._url / 'Artists/AlbumArtists'
@@ -271,8 +278,8 @@ class JellyfinClient:
         }
         url = self._url / 'Users/authenticatebyname'
         async with self._client.post(url, **kwargs) as resp:
-            content = await resp.json()
-            return content
+            if resp.status == 200:
+                return await resp.json()
 
     @staticmethod
     def _parse_authorization_header(header):
