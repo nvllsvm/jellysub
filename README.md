@@ -18,3 +18,9 @@ optional arguments:
   --port PORT          [env var: JELLYSUB_HTTP_PORT]
   --upstream UPSTREAM  [env var: JELLYSUB_UPSTREAM_URL]
 ```
+
+## Testing
+**Requires Python 3.8**
+```
+python -m unittest
+```
