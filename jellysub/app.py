@@ -171,7 +171,7 @@ async def album(request):
             'artist': ' & '.join(item['Artists']),
             'album': item['Album'],
             'title': item['Name'],
-            'coverArt': item['Album'],
+            'coverArt': item['AlbumId'],
             'duration': int(item['RunTimeTicks'] / 10000000),
             'track': item['IndexNumber'],
             'path': path,

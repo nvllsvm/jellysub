@@ -103,6 +103,8 @@ class JellyfinClient:
             }
         }
         async with self._client.get(url, **kwargs) as resp:
+            if resp.status != 200:
+                raise ValueError
             return await resp.read()
 
     async def _authenticate(self, username, password):
