@@ -30,6 +30,9 @@ async def auth_middleware(request, handler):
     except KeyError:
         return aiohttp.web.Response(status=400)
 
+    if password.startswith('enc:'):
+        password = bytearray.fromhex(password.split(':')[1]).decode()
+
     try:
         request.user = await request.app['jellyfin'].get_user(
             username, password)
