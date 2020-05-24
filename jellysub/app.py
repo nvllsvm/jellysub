@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import json
 import string
@@ -118,11 +119,14 @@ async def artists(request):
 
 async def artist(request):
     artist_id = request.url.query['id']
-    data = await request.app['jellyfin'].get_albums(request.user, artist_id)
+    artist_data, album_data = await asyncio.gather(
+        request.app['jellyfin'].get_artist(request.user, artist_id),
+        request.app['jellyfin'].get_albums(request.user, artist_id)
+    )
 
     albums = [
         {
-            'artist': ' & '.join(item['Artists']),
+            'artist': item['AlbumArtist'],
             'artistId': artist_id,
             'coverArt': item['Id'],
             'id': item['Id'],
@@ -131,7 +135,7 @@ async def artist(request):
             'songCount': 0,
             'year': item['ProductionYear'],
         }
-        for item in data['Items']
+        for item in album_data['Items']
     ]
     albums = sorted(albums, key=lambda s: (s['year'], s['name'], s['id']))
 
@@ -140,7 +144,8 @@ async def artist(request):
         'artist': {
             'album': albums,
             'albumCount': len(albums),
-            'id': artist_id
+            'id': artist_id,
+            'name': artist_data['Name'],
         },
     }
     return response
