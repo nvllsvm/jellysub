@@ -117,6 +117,31 @@ async def artists(request):
     return response
 
 
+async def genres(request):
+    data = await request.app['jellyfin'].get_genres(request.user)
+
+    genres = [
+        {
+            'value': item['Name'],
+
+            # TODO: look these up
+            'albumCount': 1,
+            'songCount': 1,
+        }
+        for item in data['Items']
+    ]
+
+    genres = sorted(genres, key=lambda s: s['value'])
+
+    response = aiohttp.web.Response()
+    response['content'] = {
+        'genres': {
+            'genre': genres
+        }
+    }
+    return response
+
+
 async def artist(request):
     artist_id = request.url.query['id']
     artist_data, album_data = await asyncio.gather(
@@ -227,6 +252,7 @@ class Application(aiohttp.web.Application):
             aiohttp.web.route('*', '/rest/stream.view', stream),
             aiohttp.web.route('*', '/rest/getCoverArt.view', cover_art),
             aiohttp.web.route('*', '/rest/getArtistInfo2.view', artist_info2),
+            aiohttp.web.route('*', '/rest/getGenres.view', genres),
         ])
 
     async def cleanup(self):
