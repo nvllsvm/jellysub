@@ -11,11 +11,22 @@ from . import jellyfin
 
 
 @aiohttp.web.middleware
+async def request_data_middleware(request, handler):
+    data = {}
+    for key, value in request.url.query.items():
+        data[key] = value
+    post_body = await request.post()
+    for key, value in post_body.items():
+        data[key] = value
+    request['data'] = data
+    return await handler(request)
+
+
+@aiohttp.web.middleware
 async def auth_middleware(request, handler):
-    query = request.url.query
     try:
-        username = query['u']
-        password = query['p']
+        username = request['data']['u']
+        password = request['data']['p']
     except KeyError:
         return aiohttp.web.Response(status=400)
 
@@ -29,7 +40,7 @@ async def auth_middleware(request, handler):
 
 @aiohttp.web.middleware
 async def content_format_middleware(request, handler):
-    response_format = request.query.get('f', 'xml')
+    response_format = request['data'].get('f', 'xml')
     if response_format not in ('json', 'xml'):
         return aiohttp.web.Response(status=400)
 
@@ -143,7 +154,7 @@ async def genres(request):
 
 
 async def artist(request):
-    artist_id = request.url.query['id']
+    artist_id = request['data']['id']
     artist_data, album_data = await asyncio.gather(
         request.app['jellyfin'].get_artist(request.user, artist_id),
         request.app['jellyfin'].get_albums(request.user, artist_id)
@@ -177,7 +188,7 @@ async def artist(request):
 
 
 async def artist_info2(request):
-    artist_id = request.url.query['id']
+    artist_id = request['data']['id']
     data = await request.app['jellyfin'].get_artist(request.user, artist_id)
 
     response = aiohttp.web.Response()
@@ -190,7 +201,7 @@ async def artist_info2(request):
 
 
 async def album(request):
-    album_id = request.url.query['id']
+    album_id = request['data']['id']
     data = await request.app['jellyfin'].get_album(request.user, album_id)
 
     songs = []
@@ -223,14 +234,14 @@ async def album(request):
 
 
 async def cover_art(request):
-    album_id = request.url.query['id']
+    album_id = request['data']['id']
     data = await request.app['jellyfin'].get_album_cover(album_id)
 
     return aiohttp.web.Response(body=data)
 
 
 async def stream(request):
-    song_id = request.url.query['id']
+    song_id = request['data']['id']
     data = await request.app['jellyfin'].download_song(request.user, song_id)
 
     return aiohttp.web.Response(body=data)
@@ -240,7 +251,11 @@ class Application(aiohttp.web.Application):
 
     def __init__(self, upstream):
         super().__init__(
-            middlewares=[auth_middleware, content_format_middleware])
+            middlewares=[
+                request_data_middleware,
+                content_format_middleware,
+                auth_middleware
+            ])
 
         self['jellyfin'] = jellyfin.JellyfinClient(upstream)
 
