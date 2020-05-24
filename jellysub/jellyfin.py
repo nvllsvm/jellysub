@@ -49,6 +49,17 @@ class JellyfinClient:
         async with self._client.get(url, **kwargs) as resp:
             return await resp.json()
 
+    async def get_artist(self, user, artist_id):
+        url = self._url / 'Users' / user['User']['Id'] / 'Items' / artist_id
+        auth = dict(self._auth_header, token=user['AccessToken'])
+        kwargs = {
+            'headers': {
+                'X-Emby-Authorization': self._build_authorization_header(auth),
+            },
+        }
+        async with self._client.get(url, **kwargs) as resp:
+            return await resp.json()
+
     async def get_albums(self, user, artist_id):
         url = self._url / 'Users' / user['User']['Id'] / 'Items'
         auth = dict(self._auth_header, token=user['AccessToken'])

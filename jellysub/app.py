@@ -147,13 +147,14 @@ async def artist(request):
 
 
 async def artist_info2(request):
+    artist_id = request.url.query['id']
+    data = await request.app['jellyfin'].get_artist(request.user, artist_id)
+
     response = aiohttp.web.Response()
     response['content'] = {
-        'error': {
-            'code': 0,
-            'message': 'not implemented',
+        'artistInfo2': {
+            'biography': data['Overview'],
         },
-        'status': 'failed',
     }
     return response
 
