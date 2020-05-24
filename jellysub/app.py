@@ -158,7 +158,7 @@ async def artist_info2(request):
     response = aiohttp.web.Response()
     response['content'] = {
         'artistInfo2': {
-            'biography': data['Overview'],
+            'biography': data.get('Overview', ''),
         },
     }
     return response
