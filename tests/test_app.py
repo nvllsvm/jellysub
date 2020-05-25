@@ -24,12 +24,20 @@ class MockJellyfinServer(aiohttp.web.Application):
         return aiohttp.web.json_response({'AccessToken': 'ZZZ'})
 
 
-class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
+class AuthTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
+
+        self.username = 'abc'
+        self.password = 'xyz'
+
         self.mock_jellyfin = aiohttp.test_utils.TestServer(
             MockJellyfinServer())
+
+        self.mock_jellyfin.app['username'] = 'abc'
+        self.mock_jellyfin.app['password'] = 'xyz'
+
         await self.mock_jellyfin.start_server()
 
         self.app = jellysub.app.Application(
@@ -43,10 +51,32 @@ class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(self.client.close)
         self.addAsyncCleanup(self.app.cleanup)
 
-    async def test_missing_required_query_param(self):
-        required = {
+    async def test_valid_auth(self):
+        params = {
             'u': 'abc',
             'p': 'xyz'
+        }
+        resp = await self.client.request(
+            'GET', '/rest/ping.view', params=params)
+        self.assertEqual(resp.status, 200)
+
+    async def test_invalid_auth(self):
+        correct_params = {
+            'u': self.username,
+            'p': self.password,
+        }
+
+        for key in correct_params:
+            params = correct_params.copy()
+            params[key] = 'X'
+            resp = await self.client.request(
+                'GET', '/rest/ping.view', params=params)
+            self.assertEqual(resp.status, 401)
+
+    async def test_missing_required_query_param(self):
+        required = {
+            'u': self.username,
+            'p': self.password,
         }
         for key in required:
             params = required.copy()
@@ -54,25 +84,3 @@ class PingHandlerTests(unittest.IsolatedAsyncioTestCase):
             resp = await self.client.request(
                 'GET', '/rest/ping.view', params=params)
             self.assertEqual(resp.status, 400)
-
-    async def test_invalid_auth(self):
-        self.mock_jellyfin.app['username'] = 'abc'
-        self.mock_jellyfin.app['password'] = 'xyz'
-
-        correct_auth = {
-            'u': 'abc',
-            'p': 'xyz'
-        }
-
-        # valid
-        resp = await self.client.request(
-            'GET', '/rest/ping.view', params=correct_auth)
-        self.assertEqual(resp.status, 200)
-
-        # invalid
-        for key in correct_auth:
-            params = correct_auth.copy()
-            params[key] = 'X'
-            resp = await self.client.request(
-                'GET', '/rest/ping.view', params=params)
-            self.assertEqual(resp.status, 401)
