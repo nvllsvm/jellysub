@@ -1,8 +1,15 @@
 # jellysub
-An HTTP service which allows Subsonic clients to use Jellyfin
+A shim to use Subsonic clients with Jellyfin
 
-Known compatible clients:
-- [Audinaut](https://github.com/nvllsvm/audinaut) (except playlist support)
+Jellysub is an HTTP service which sits between Subsonic-compatible clients and a
+Jellyfin server.
+
+## Compatibility
+Clients tested with Jellysub:
+
+| Client                                          | Notes                                |
+|-------------------------------------------------|--------------------------------------|
+| [Audinaut](https://github.com/nvllsvm/audinaut) | fully functional excluding playlists |
 
 
 ## Installation
