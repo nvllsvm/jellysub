@@ -2,25 +2,15 @@
 An HTTP service which allows Subsonic clients to use Jellyfin
 
 ## Installation
-```
-pip install jellysub
-```
+Available in the following distribution channels:
+- [Docker](https://hub.docker.com/r/nvllsvm/jellysub)
+- [PyPi (Python)](https://pypi.org/project/jellysub/)
 
-## Usage
-```
-usage: jellysub [-h] [--port PORT] --upstream UPSTREAM
+## Example usage
 
-If an arg is specified in more than one place, then commandline values
-override environment variables which override defaults.
+The below will start the Jellysub server on port *8000* and
+communicate with the Jellyfin server at **https://yourjellyfinserver.com**
 
-optional arguments:
-  -h, --help           show this help message and exit
-  --port PORT          [env var: JELLYSUB_HTTP_PORT]
-  --upstream UPSTREAM  [env var: JELLYSUB_UPSTREAM_URL]
 ```
-
-## Testing
-**Requires Python 3.8**
-```
-python -m unittest
+jellysub --port 8000 --upstream https://yourjellyfinserver.com
 ```
