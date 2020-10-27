@@ -81,6 +81,8 @@ def _to_xml(data, key=None):
             root.set(key, str(value))
         elif isinstance(value, list):
             root.extend([_to_xml(v, key) for v in value])
+        elif value is None:
+            root.set(key, '')
         else:
             raise ValueError
     return root
@@ -163,6 +165,7 @@ async def artist(request):
         request.app['jellyfin'].get_albums(request.user, artist_id)
     )
 
+    # TODO can AlbumArtist and Name be null?
     albums = [
         {
             'artist': item['AlbumArtist'],
@@ -172,11 +175,11 @@ async def artist(request):
             'name': item['Name'],
             'duration': 0,
             'songCount': 0,
-            'year': item['ProductionYear'],
+            'year': item.get('ProductionYear'),
         }
         for item in album_data['Items']
     ]
-    albums = sorted(albums, key=lambda s: (s['year'], s['name'], s['id']))
+    albums = sorted(albums, key=lambda s: (s['year'] or 0, s['name'], s['id']))
 
     response = aiohttp.web.Response()
     response['content'] = {
