@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.5
+- Fix albums without production year
+
 ## 0.0.4
 - Add `getGenres`
 - Add support for either query string or POST bodies
