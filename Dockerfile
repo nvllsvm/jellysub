@@ -4,4 +4,4 @@ COPY . .
 RUN apk add --no-cache -t .build musl-dev gcc \
  && pip install --no-cache-dir -e . \
  && apk del .build
-CMD jellysub
+ENTRYPOINT ["/usr/local/bin/jellysub"]
