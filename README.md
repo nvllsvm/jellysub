@@ -25,12 +25,21 @@ The following environment variables may be used to configure Jellysub.
 | `JELLYSUB_HTTP_PORT`    | Port to listen for HTTP requests on. (Default `4040`) |
 | `JELLYSUB_UPSTREAM_URL` | URL of the Jellyfin server. Required.                 |
 
-Command line arguments may be used instead of environment variables. For example,
-the below will start the Jellysub server on port **8000** and
-communicate with the Jellyfin server at **https://yourjellyfinserver.com**
+Command line arguments may also be used. See `jellysub --help` for more information.
 
+### Examples
+Both examples below start a Jellysub server on port **4040** and communicating
+with the Jellyfin server at **https://yourjellyfinserver.com**.
+
+#### Docker
 ```
-jellysub --port 8000 --upstream https://yourjellyfinserver.com
+docker run \
+    -e JELLYSUB_UPSTREAM_URL=https://yourjellyfinserver.com \
+    -p 4040:4040 \
+    nvllsvm/jellysub
 ```
 
-See `jellysub --help` for more information.
+#### Command Line
+```
+jellysub --upstream https://yourjellyfinserver.com
+```
