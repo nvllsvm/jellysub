@@ -17,11 +17,20 @@ Available in the following distribution channels:
 - [Docker](https://hub.docker.com/r/nvllsvm/jellysub)
 - [PyPi (Python)](https://pypi.org/project/jellysub/)
 
-## Example usage
+## Running
+The following environment variables may be used to configure Jellysub.
 
-The below will start the Jellysub server on port **8000** and
+| Name                    | Description                                           |
+|-------------------------|-------------------------------------------------------|
+| `JELLYSUB_HTTP_PORT`    | Port to listen for HTTP requests on. (Default `4040`) |
+| `JELLYSUB_UPSTREAM_URL` | URL of the Jellyfin server. Required.                 |
+
+Command line arguments may be used instead of environment variables. For example,
+the below will start the Jellysub server on port **8000** and
 communicate with the Jellyfin server at **https://yourjellyfinserver.com**
 
 ```
 jellysub --port 8000 --upstream https://yourjellyfinserver.com
 ```
+
+See `jellysub --help` for more information.
