@@ -76,20 +76,25 @@ class JellyfinClient:
         async with self._client.get(url, **kwargs) as resp:
             return await resp.json()
 
-    async def get_albums(self, user, artist_id):
+    async def get_albums(self, user, artist_id=None):
         url = self._url / 'Users' / user['User']['Id'] / 'Items'
         auth = dict(self._auth_header, token=user['AccessToken'])
+
+        params = {
+            'IncludeItemTypes': 'MusicAlbum',
+            'Limit': '1000',
+            'Recursive': 'true',
+            'StartIndex': '0',
+        }
+
+        if artist_id is not None:
+            params['AlbumArtistIds'] = artist_id
+
         kwargs = {
             'headers': {
                 'X-Emby-Authorization': self._build_authorization_header(auth),
             },
-            'params': {
-                'AlbumArtistIds': artist_id,
-                'IncludeItemTypes': 'MusicAlbum',
-                'Limit': '1000',
-                'Recursive': 'true',
-                'StartIndex': '0',
-            }
+            'params': params
         }
         async with self._client.get(url, **kwargs) as resp:
             return await resp.json()
