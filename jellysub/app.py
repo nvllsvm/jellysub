@@ -239,6 +239,72 @@ async def album(request):
     return response
 
 
+async def albumList(request):
+    offset = int(request['data'].get('offset', 0))
+    size = int(request['data'].get('size', 10))
+
+    data = await request.app['jellyfin'].get_albums(request.user)
+
+    albums = []
+    for (i, item) in enumerate(data['Items']):
+        if i < offset:
+            continue
+        if (i - offset) == size:
+            break
+
+        album_data = await request.app['jellyfin'].get_album(request.user, item['Id'])
+
+        albums.append({
+            'id': item['Id'],
+            'parent': 1,
+            'title': item['Name'],
+            'artist': item['AlbumArtists'][0]['Name'],
+            'isDir': True,
+            'coverArt': item['Id'],
+        })
+
+    response = aiohttp.web.Response()
+    response['content'] = {
+        'albumList': {
+            'album': albums
+        },
+    }
+    return response
+
+async def albumList2(request):
+    offset = int(request['data'].get('offset', 0))
+    size = int(request['data'].get('size', 10))
+
+    data = await request.app['jellyfin'].get_albums(request.user)
+
+    albums = []
+    for (i, item) in enumerate(data['Items']):
+        if i < offset:
+            continue
+        if (i - offset) == size:
+            break
+
+        album_data = await request.app['jellyfin'].get_album(request.user, item['Id'])
+
+        albums.append({
+            'id': item['Id'],
+            'name': item['Name'],
+            'coverArt': item['Id'],
+            'songCount': len(album_data['Items']),
+            'artist': item['AlbumArtists'][0]['Name'],
+            'artistId': item['AlbumArtists'][0]['Id'],
+            'duration': int(item['RunTimeTicks'] / 10000000)
+        })
+
+    response = aiohttp.web.Response()
+    response['content'] = {
+        'albumList2': {
+            'album': albums
+        },
+    }
+    return response
+
+
 async def cover_art(request):
     album_id = request['data']['id']
     data = await request.app['jellyfin'].get_album_cover(album_id)
@@ -270,6 +336,8 @@ class Application(aiohttp.web.Application):
             aiohttp.web.route('*', '/rest/getArtists.view', artists),
             aiohttp.web.route('*', '/rest/getArtist.view', artist),
             aiohttp.web.route('*', '/rest/getAlbum.view', album),
+            aiohttp.web.route('*', '/rest/getAlbumList.view', albumList),
+            aiohttp.web.route('*', '/rest/getAlbumList2.view', albumList2),
             aiohttp.web.route('*', '/rest/stream.view', stream),
             aiohttp.web.route('*', '/rest/getCoverArt.view', cover_art),
             aiohttp.web.route('*', '/rest/getArtistInfo2.view', artist_info2),
