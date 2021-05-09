@@ -2,14 +2,17 @@ import re
 import uuid
 
 import aiohttp.web
+import pkg_resources
 import yarl
+
+_VERSION = pkg_resources.get_distribution(__package__).version
 
 
 class JellyfinClient:
     _CLIENT = 'jellysub'
     _DEVICE = 'jellysub'
     _DEVICE_ID = uuid.uuid4().hex
-    _VERSION = '0.0.0'
+    _VERSION = _VERSION
 
     def __init__(self, url):
         self._client = aiohttp.ClientSession()
