@@ -2,10 +2,13 @@ import re
 import uuid
 
 import aiohttp.web
-import pkg_resources
 import yarl
 
-_VERSION = pkg_resources.get_distribution(__package__).version
+try:
+    import pkg_resources
+    _VERSION = pkg_resources.get_distribution(__package__).version
+except Exception:
+    _VERSION = 'unknown'
 
 
 class JellyfinClient:
