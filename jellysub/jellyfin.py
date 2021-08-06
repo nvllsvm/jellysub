@@ -1,3 +1,4 @@
+import importlib.metadata
 import re
 import uuid
 
@@ -5,9 +6,8 @@ import aiohttp.web
 import yarl
 
 try:
-    import pkg_resources
-    _VERSION = pkg_resources.get_distribution(__package__).version
-except Exception:
+    _VERSION = importlib.metadata.version(__package__)
+except importlib.metadata.PackageNotFoundError:
     _VERSION = 'unknown'
 
 
