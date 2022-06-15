@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.6
+- Fix compatibility with Jellyfin 10.8.0
+- Fix compatibility with latest aiohttp
+
 ## 0.0.5
 - Fix albums without production year
 
