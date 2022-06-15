@@ -343,6 +343,10 @@ class Application(aiohttp.web.Application):
             aiohttp.web.route('*', '/rest/getArtistInfo2.view', artist_info2),
             aiohttp.web.route('*', '/rest/getGenres.view', genres),
         ])
+        self.on_startup.append(self.on_start)
+
+    async def on_start(self, *_):
+        await self['jellyfin'].open()
 
     async def cleanup(self):
         await super().cleanup()

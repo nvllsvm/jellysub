@@ -18,7 +18,6 @@ class JellyfinClient:
     _VERSION = _VERSION
 
     def __init__(self, url):
-        self._client = aiohttp.ClientSession()
         self._url = yarl.URL(url)
         self._users = {}
         self._auth_header = {
@@ -27,6 +26,9 @@ class JellyfinClient:
             'DeviceId': self._DEVICE_ID,
             'Version': self._VERSION,
         }
+
+    async def open(self):
+        self._client = aiohttp.ClientSession()
 
     async def close(self):
         await self._client.close()
