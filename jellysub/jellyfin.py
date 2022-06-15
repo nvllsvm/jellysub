@@ -43,7 +43,7 @@ class JellyfinClient:
 
     async def get_album_artists(self, user):
         url = self._url / 'Artists/AlbumArtists'
-        auth = dict(self._auth_header, token=user['AccessToken'])
+        auth = dict(self._auth_header, Token=user['AccessToken'])
         kwargs = {
             'headers': {
                 'X-Emby-Authorization': self._build_authorization_header(auth),
@@ -59,7 +59,7 @@ class JellyfinClient:
 
     async def get_genres(self, user):
         url = self._url / 'Genres'
-        auth = dict(self._auth_header, token=user['AccessToken'])
+        auth = dict(self._auth_header, Token=user['AccessToken'])
         kwargs = {
             'headers': {
                 'X-Emby-Authorization': self._build_authorization_header(auth),
@@ -75,7 +75,7 @@ class JellyfinClient:
 
     async def get_artist(self, user, artist_id):
         url = self._url / 'Users' / user['User']['Id'] / 'Items' / artist_id
-        auth = dict(self._auth_header, token=user['AccessToken'])
+        auth = dict(self._auth_header, Token=user['AccessToken'])
         kwargs = {
             'headers': {
                 'X-Emby-Authorization': self._build_authorization_header(auth),
@@ -86,7 +86,7 @@ class JellyfinClient:
 
     async def get_albums(self, user, artist_id=None):
         url = self._url / 'Users' / user['User']['Id'] / 'Items'
-        auth = dict(self._auth_header, token=user['AccessToken'])
+        auth = dict(self._auth_header, Token=user['AccessToken'])
 
         params = {
             'IncludeItemTypes': 'MusicAlbum',
@@ -110,7 +110,7 @@ class JellyfinClient:
     async def get_album(self, user, album_id):
         url = self._url / 'Users' / user['User']['Id'] / 'Items'
 
-        auth = dict(self._auth_header, token=user['AccessToken'])
+        auth = dict(self._auth_header, Token=user['AccessToken'])
         kwargs = {
             'headers': {
                 'X-Emby-Authorization': self._build_authorization_header(auth),
