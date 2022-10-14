@@ -1,4 +1,14 @@
 # jellysub
+⚠ No longer maintained. 
+
+Although not a direct replacement, I've since moved onto syncing an Opus version
+of my entire library to my devices using [harmonize](https://github.com/nvllsvm/harmonize)
+and [Syncthing](https://syncthing.net/).
+
+Contact me if you're interested in maintaining this.
+
+--- 
+
 A shim to use Subsonic clients with Jellyfin
 
 Jellysub is an HTTP service which sits between Subsonic-compatible clients and a
